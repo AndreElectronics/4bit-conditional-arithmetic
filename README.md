@@ -27,10 +27,6 @@
 │   ├── timing-analysis.png      # Timing simulation results
 │   └── truth-table-verify.png   # Truth table verification
 │
-└── tests/                       # Test files
-    ├── expected-results.txt    # Expected outputs
-    └── test-cases.txt          # Test vectors
-│
 ├── LICENSE                      # MIT License
 ├── README.md                    # This documentation file
 ```
@@ -166,10 +162,6 @@ The PCB includes:
 ### 2. Manufacturing
 - Use `pcb/PCB_ConditionalArithmetic_YYYY-MM-DD.zip` for PCB fabrication
 - Refer to PCB layout PDFs for assembly guidance
-
-### 3. Testing
-- Use `tests/test-cases.txt` for verification
-- Compare with `tests/expected-results.txt`
 
 ## Design Principles
 
