@@ -1,5 +1,40 @@
 # 4-bit Conditional Arithmetic Unit
 
+## Repository Structure
+```
+4bit-conditional-arithmetic/
+│
+├── README.md                    # This documentation file
+├── LICENSE                      # MIT License
+│
+├── schematic/                   # Circuit design
+│   ├── circuit-complete.pdf     # Full schematic (EasyEDA)
+│   └── block-diagram.png        # System block diagram
+│
+├── simulation/                  # Multisim simulations
+│   ├── project-multisim.ms14    # Multisim project file
+│   ├── timing-analysis.png      # Timing simulation results
+│   └── truth-table-verify.png   # Truth table verification
+│
+├── pcb/                         # PCB design files
+│   ├── PCB_ConditionalArithmetic_YYYY-MM-DD.zip  # Gerber files
+│   ├── PCB_ConditionalArithmetic.pdf             # PCB layout
+│   ├── PCB_ConditionalArithmetic_COPPER.pdf      # Copper layer
+│   ├── PCB_ConditionalArithmetic_SILK.pdf        # Silkscreen
+│   └── pcb-design.png           # PCB preview image
+│
+├── docs/                        # Documentation
+│   ├── equality-detection.png   # A=B comparison circuit
+│   ├── b-processing.png         # B conditioning circuit
+│   ├── adder-7483.png           # 7483 adder circuit
+│   ├── carry-management.png     # Carry-out management
+│   └── display-output.png       # 7448 display circuit
+│
+└── tests/                       # Test files
+    ├── test-cases.txt          # Test vectors
+    └── expected-results.txt    # Expected outputs
+```
+
 ## Overview
 This circuit implements an arithmetic unit that performs different operations based on the relationship between two 4-bit binary numbers (A and B), where A ≥ B is always true. The design optimizes component usage while implementing complex conditional arithmetic logic.
 
@@ -12,28 +47,32 @@ The circuit performs the following conditional operations:
 2. **When A > B**:  
    `Z = (A - B) - 1`
 
-[![Circuit Overview](media/circuit-overview.png)](media/circuit-overview.png)
+[![Circuit Block Diagram](docs/block-diagram.png)](docs/block-diagram.png)
 
 ## Design Architecture
 
-### 1. Equality Detection Circuit
-- **Components**: 7486 (Quad XOR) + 7432 (Triple OR)
+### 1. Input Section
+- **DIP switches** for 4-bit inputs A[3:0] and B[3:0]
+- Manual binary configuration with pull-up resistors
+
+### 2. Equality Detection Circuit
+- **Components**: 7486 (Quad XOR) + 7432 (Quad OR)
 - **Logic**: Bitwise XOR between A and B determines equality
 - **Output**: `ANEQB` (A Not EQual to B) = 1 when A ≠ B
-- **Implementation**: 4 XOR gates feed into a 3-input OR gate
+- **Implementation**: 4 XOR gates feed into OR gate
 
-[![Equality Detection](media/equality-detection.png)](media/equality-detection.png)
+[![Equality Detection](docs/equality-detection.png)](docs/equality-detection.png)
 
-### 2. Input Processing Stage
+### 3. Input Processing Stage
 - **Components**: 7404 (Hex NOT) + 7408 (Quad AND)
 - **Logic**: `B_processed = ANEQB * B'`
   - When A = B: All bits of B are forced to 0
   - When A > B: Each bit of B is inverted
-- **Efficiency**: Utilizes 4 NOT gates and 4 AND gates
+- **Efficiency**: Uses 4 NOT gates and 4 AND gates
 
-[![Input Processing](media/input-processing.png)](media/input-processing.png)
+[![B Processing](docs/b-processing.png)](docs/b-processing.png)
 
-### 3. Core Arithmetic Unit
+### 4. Core Arithmetic Unit
 - **Component**: 7483 4-bit Binary Adder
 - **Input A**: Direct connection (A₃A₂A₁A₀)
 - **Input B**: Connected to processed B values
@@ -41,18 +80,23 @@ The circuit performs the following conditional operations:
   - When A = B: `C₀ = 1` → Implements `A + 1`
   - When A > B: `C₀ = 0` → Implements `A + B'`
 
-[![Core Arithmetic](media/core-arithmetic.png)](media/core-arithmetic.png)
+[![7483 Adder](docs/adder-7483.png)](docs/adder-7483.png)
 
-### 4. Carry-Out Management
-During testing, the circuit exhibited an unexpected carry-out (C₄) when A ≠ B. The ideal solution would use an additional AND gate to conditionally suppress C₄. However, to optimize component usage and reduce IC count, an alternative implementation was developed.
+### 5. Carry-Out Management
+During testing, the circuit exhibited an unexpected carry-out (C₄) when A ≠ B. To optimize component usage, an alternative implementation was developed:
 
-**Implementation**: 
-- Utilizes the remaining NOT gate from the 7404 to generate `ANEQB'`
-- Implements `C₄_corrected = C₄ · ANEQB'` using discrete components
-- Employs diode-resistor logic with a carefully selected 1kΩ pull-up resistor
-- Ensures sufficient current for downstream 7448 7-segment decoders
+- Uses remaining NOT gate from 7404 for `ANEQB'`
+- Implements `C₄_corrected = C₄ · ANEQB'` with diode-resistor logic
+- 1kΩ pull-up resistor ensures proper current for 7448 decoders
 
-[![Carry Management](media/carry-management.png)](media/carry-management.png)
+[![Carry Management](docs/carry-management.png)](docs/carry-management.png)
+
+### 6. Output Display
+- **Component**: 7448 BCD to 7-segment decoders
+- Common cathode 7-segment displays
+- Shows 4-bit results in hexadecimal
+
+[![Display Output](docs/display-output.png)](docs/display-output.png)
 
 ## Mathematical Formulation
 
@@ -65,17 +109,20 @@ Z = A + 1
 ### Case A > B:
 ```
 Z = (A - B) - 1
-  = A + (~B + 1) - 1  (two's complement representation)
-  = A + ~B            (simplification)
+  = A + (~B + 1) - 1  (two's complement)
+  = A + ~B            (simplified)
   = A + B_processed   (B_processed = ~B, C₀ = 0)
 ```
 
-Both cases elegantly reduce to the same hardware operation:
-```
-Z = A + B_processed + C₀
-```
+Both cases reduce to: `Z = A + B_processed + C₀`
 
-## Truth Table (Selected Test Cases)
+## Simulation Results
+
+[![Timing Analysis](simulation/timing-analysis.png)](simulation/timing-analysis.png)
+
+[![Truth Table Verification](simulation/truth-table-verify.png)](simulation/truth-table-verify.png)
+
+## Truth Table (Selected Cases)
 
 | Condition | A (Hex) | B (Hex) | Operation | Result (Hex) |
 |-----------|---------|---------|-----------|--------------|
@@ -88,31 +135,48 @@ Z = A + B_processed + C₀
 
 *Note: Result with C₄ = 1 (16 in decimal)*
 
-[![Truth Table](media/truth-table.png)](media/truth-table.png)
-
-## Simulation Results
-
-[![Timing Simulation](media/timing-simulation.png)](media/timing-simulation.png)
-
-[![Waveform Analysis](media/waveform-analysis.png)](media/waveform-analysis.png)
-
 ## Component Utilization
 
-| IC | Type | Usage | Purpose |
-|----|------|-------|---------|
-| 7486 | Quad XOR | 4/4 gates | Equality comparison |
-| 7432 | Quad OR | 3/4 gates | Combine comparison results |
-| 7404 | Hex NOT | 5/6 gates | Signal inversion |
-| 7408 | Quad AND | 4/4 gates | Conditional B processing |
+| IC | Type | Gates Used | Purpose |
+|----|------|------------|---------|
+| 7486 | Quad XOR | 4/4 | Equality comparison |
+| 7432 | Quad OR | 3/4 | Combine XOR results |
+| 7404 | Hex NOT | 5/6 | Signal inversion |
+| 7408 | Quad AND | 4/4 | Conditional B processing |
 | 7483 | 4-bit Adder | Full | Arithmetic core |
-| Discrete | Diode + Resistor | Custom | Carry-out conditioning |
+| 7448 | BCD-7seg | As needed | Display output |
+| Diode+1kΩ | Discrete | Custom | Carry-out conditioning |
+
+## PCB Design
+
+[![PCB Design](pcb/pcb-design.png)](pcb/pcb-design.png)
+
+The PCB includes:
+- **Gerber files**: Ready for manufacturing (in .zip archive)
+- **Copper layers**: Top and bottom copper views
+- **Silkscreen**: Component labels and indicators
+- **3D view**: Physical board visualization
+
+## Getting Started
+
+### 1. Review Design Files
+- Check `schematic/circuit-complete.pdf` for full circuit
+- Review `simulation/project-multisim.ms14` for simulation
+
+### 2. Manufacturing
+- Use `pcb/PCB_ConditionalArithmetic_YYYY-MM-DD.zip` for PCB fabrication
+- Refer to PCB layout PDFs for assembly guidance
+
+### 3. Testing
+- Use `tests/test-cases.txt` for verification
+- Compare with `tests/expected-results.txt`
 
 ## Design Principles
 
-This implementation demonstrates several key engineering principles:
-- **Component Efficiency**: Maximizing gate utilization across ICs
-- **Functional Integration**: Combining multiple operations in single stages
-- **Resource Optimization**: Using discrete components where appropriate to reduce IC count
-- **Signal Integrity**: Careful selection of resistor values for proper current drive
+This implementation demonstrates:
+- **Component Efficiency**: Maximizing gate utilization
+- **Functional Integration**: Multiple operations in single stages
+- **Resource Optimization**: Discrete components reduce IC count
+- **Signal Integrity**: Proper resistor selection for current drive
 
 The circuit successfully implements complex conditional arithmetic using minimal TTL components while maintaining reliable operation across all input conditions.
