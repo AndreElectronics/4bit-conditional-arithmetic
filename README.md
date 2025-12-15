@@ -23,7 +23,7 @@
 │   └── circuit-complete.pdf     # Full schematic (EasyEDA)
 │
 ├── simulation/                  # Multisim simulations
-│   ├── project-multisim.ms14    # Multisim project file
+│   ├── 4bit-conditional-arithmetic.ms14    # Multisim project file
 │   ├── timing-analysis.png      # Timing simulation results
 │   └── truth-table-verify.png   # Truth table verification
 │
@@ -157,7 +157,7 @@ The PCB includes:
 
 ### 1. Review Design Files
 - Check `schematic/circuit-complete.pdf` for full circuit
-- Review `simulation/project-multisim.ms14` for simulation
+- Review `simulation/4bit-conditional-arithmetic.ms14` for simulation
 
 ### 2. Manufacturing
 - Use `pcb/PCB_ConditionalArithmetic_YYYY-MM-DD.zip` for PCB fabrication
